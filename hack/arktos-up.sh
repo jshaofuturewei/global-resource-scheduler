@@ -48,6 +48,7 @@ KUBELET_AUTHENTICATION_WEBHOOK=${KUBELET_AUTHENTICATION_WEBHOOK:-""}
 POD_MANIFEST_PATH=${POD_MANIFEST_PATH:-"/var/run/kubernetes/static-pods"}
 KUBELET_FLAGS=${KUBELET_FLAGS:-""}
 KUBELET_IMAGE=${KUBELET_IMAGE:-""}
+
 # many dev environments run with swap on, so we don't fail in this env
 FAIL_SWAP_ON=${FAIL_SWAP_ON:-"false"}
 # Name of the network plugin, eg: "kubenet"
@@ -100,6 +101,7 @@ STORAGE_BACKEND=${STORAGE_BACKEND:-"etcd3"}
 STORAGE_MEDIA_TYPE=${STORAGE_MEDIA_TYPE:-""}
 # preserve etcd data. you also need to set ETCD_DIR.
 PRESERVE_ETCD="${PRESERVE_ETCD:-false}"
+ETCD_STARTED="${ETCD_STARTED:-false}"
 # enable Pod priority and preemption
 ENABLE_POD_PRIORITY_PREEMPTION=${ENABLE_POD_PRIORITY_PREEMPTION:-""}
 
@@ -415,9 +417,13 @@ function warning_log {
 }
 
 function start_etcd {
-    echo "Starting etcd"
-    export ETCD_LOGFILE=${LOG_DIR}/etcd.log
-    kube::etcd::start
+    if [[ "${ETCD_STARTED}" == true ]]; then
+      echo "Etcd has been started"
+    else
+      echo "Starting etcd"
+      export ETCD_LOGFILE=${LOG_DIR}/etcd.log
+      kube::etcd::start
+    fi
 }
 
 
@@ -481,15 +487,7 @@ function start_apiserver {
     ${CONTROLPLANE_SUDO} cp hack/apiserver.config $configfilepath
     echo "Creating apiserver partition config file  $configfilepath..."
 
-    previous=tenant$(($1+1))
-    if [[ $1 -eq 0 ]]; then
-      previous=
-    fi
-    partition_end=tenant$(($1+2))
-    if [[ "$(($1 + 1))" -eq "${APISERVER_NUMBER}" ]]; then
-      partition_end=
-    fi
-    ${CONTROLPLANE_SUDO}  sed -i "s/tenant_begin,tenant_end/${previous},${partition_end}/gi"  $configfilepath
+    ${CONTROLPLANE_SUDO}  sed -i "s/tenant_begin,tenant_end/$2,$3/gi"  $configfilepath
     security_admission=""
     if [[ -n "${DENY_SECURITY_CONTEXT_ADMISSION}" ]]; then
       security_admission=",SecurityContextDeny"
@@ -1010,7 +1008,7 @@ if [[ "${KUBETEST_IN_DOCKER:-}" == "true" ]]; then
 fi
 
 # validate that etcd is: not running, in path, and has minimum required version.
-if [[ "${START_MODE}" != "kubeletonly" ]]; then
+if [[ "${START_MODE}" != "kubeletonly" && "${ETCD_STARTED}" != true ]]; then
   kube::etcd::validate
 fi
 
@@ -1042,9 +1040,18 @@ if [[ "${START_MODE}" != "kubeletonly" ]]; then
   kube::common::set_service_accounts
   echo "Starting ${APISERVER_NUMBER} kube-apiserver instances. If you want to make changes to the kube-apiserver nubmer, please run export APISERVER_SERVER=n(n=1,2,...). "
   APISERVER_PID_ARRAY=()
-  previous=
+  partition_begin=""
+  partition_end=""
+  if [ $# -gt 0 ]; then
+    partition_begin=$1
+  fi
+  if [ $# -gt 1 ]; then
+    partition_end=$2
+  fi
+  echo "The partition has been set to [${partition_begin}, ${partition_end})"
+  
   for ((i = $((APISERVER_NUMBER - 1)) ; i >= 0 ; i--)); do
-    kube::common::start_apiserver
+    start_apiserver $i $partition_begin $partition_end
   done
   #remove workload controller manager cluster role and rolebinding applying per this already be added to bootstrappolicy
   
