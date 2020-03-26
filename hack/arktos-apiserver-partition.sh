@@ -220,10 +220,25 @@ function start_apiserver {
   fi
   kube::common::set_service_accounts
   echo "starting apiserver"
-  kube::common::start_apiserver
+  kube::common::start_apiserver $1 $2
 
 }
 
+function start_workload_controller_manager {
+  # install cni plugin based on env var CNIPLUGIN (bridge, alktron)
+  kube::util::ensure-gnu-sed
+
+  echo "starting to build binaries"
+  kube::common::build
+
+  ### IF the user didn't supply an output/ for the build... Then we detect.
+  if [ "${GO_OUT}" == "" ]; then
+    kube::common::detect_binary
+  fi
+  echo "starting workload controller managers"
+  kube::common::start_workload_controller_manager $1
+
+}
 "$@"
 
 

@@ -146,6 +146,9 @@ AUDIT_POLICY_FILE=${AUDIT_POLICY_FILE:-""}
 # Kube-apiserver instance number
 APISERVER_NUMBER=${APISERVER_NUMBER:-"1"}
 
+ALLOW_WORKLOAD_CM=${ALLOW_WORKLOAD_CM:-"true"}
+
+
 # sanity check for OpenStack provider
 if [ "${CLOUD_PROVIDER}" == "openstack" ]; then
     if [ "${CLOUD_CONFIG}" == "" ]; then
@@ -486,14 +489,25 @@ function start_apiserver {
     ${CONTROLPLANE_SUDO} rm -f  $configfilepath
     ${CONTROLPLANE_SUDO} cp hack/apiserver.config $configfilepath
     echo "Creating apiserver partition config file  $configfilepath..."
+    partition_begin=""
+    partition_end=""
+    if [ $# -gt 1 ]; then
+      partition_begin=$2
+    fi
+    if [ $# -gt 2 ]; then
+      partition_end=$3
+    fi
+    echo "The partition has been set to [${partition_begin}, ${partition_end})"
 
-    ${CONTROLPLANE_SUDO}  sed -i "s/tenant_begin,tenant_end/$2,$3/gi"  $configfilepath
+    
+    ${CONTROLPLANE_SUDO}  sed -i "s/tenant_begin,tenant_end/${partition_begin}, ${partition_end})/gi"  $configfilepath
     security_admission=""
     if [[ -n "${DENY_SECURITY_CONTEXT_ADMISSION}" ]]; then
       security_admission=",SecurityContextDeny"
     fi
     if [[ -n "${PSP_ADMISSION}" ]]; then
-      security_admission=",PodSecurityPolicy"
+    
+    security_admission=",PodSecurityPolicy"
     fi
     if [[ -n "${NODE_ADMISSION}" ]]; then
       security_admission=",NodeRestriction"
@@ -1051,7 +1065,7 @@ if [[ "${START_MODE}" != "kubeletonly" ]]; then
   echo "The partition has been set to [${partition_begin}, ${partition_end})"
   
   for ((i = $((APISERVER_NUMBER - 1)) ; i >= 0 ; i--)); do
-    start_apiserver $i $partition_begin $partition_end
+    kube::common::start_apiserver $i $partition_begin $partition_end
   done
   #remove workload controller manager cluster role and rolebinding applying per this already be added to bootstrappolicy
   
@@ -1061,7 +1075,9 @@ if [[ "${START_MODE}" != "kubeletonly" ]]; then
   #cluster/kubectl.sh create -f hack/runtime/workload-controller-manager-clusterrolebinding.yaml
 
   start_controller_manager
-  kube::common::start_workload_controller_manager
+  if [[ "${ALLOW_WORKLOAD_CM:-}" == "true" ]]; then
+     kube::common::start_workload_controller_manager
+  fi
   if [[ "${EXTERNAL_CLOUD_PROVIDER:-}" == "true" ]]; then
     start_cloud_controller_manager
   fi

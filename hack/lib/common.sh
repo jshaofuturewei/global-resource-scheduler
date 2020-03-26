@@ -242,6 +242,8 @@ function kube::common::start_apiserver()  {
       partition_end=$2
     fi
 
+    echo "The partition has been set to [${partition_begin},${partition_end})"
+
     CONTROLPLANE_SUDO=$(test -w "${CERT_DIR}" || echo "sudo -E")
     # Create apiservern.config for kube-apiserver partition
 
@@ -378,8 +380,9 @@ EOF
     fi
 
     # Grant apiserver permission to speak to the kubelet
-    ${KUBECTL} --kubeconfig "${CERT_DIR}/admin.kubeconfig" create clusterrolebinding kube-apiserver-kubelet-admin --clusterrole=system:kubelet-api-admin --user=kube-apiserver
-
+    if  ${KUBECTL} --kubeconfig "${CERT_DIR}/admin.kubeconfig" get clusterrolebinding kube-apiserver-kubelet-admin; then
+      ${KUBECTL} --kubeconfig "${CERT_DIR}/admin.kubeconfig" create clusterrolebinding kube-apiserver-kubelet-admin --clusterrole=system:kubelet-api-admin --user=kube-apiserver
+    fi
     ${CONTROLPLANE_SUDO} cp "${CERT_DIR}/admin.kubeconfig" "${CERT_DIR}/admin-kube-aggregator.kubeconfig"
     ${CONTROLPLANE_SUDO} chown "$(whoami)" "${CERT_DIR}/admin-kube-aggregator.kubeconfig"
     ${KUBECTL} config set-cluster local-up-cluster --kubeconfig="${CERT_DIR}/admin-kube-aggregator.kubeconfig" --server="https://${API_HOST_IP}:31090"
@@ -412,11 +415,21 @@ function kube::common::test_apiserver_off {
 
 function kube::common::start_workload_controller_manager {
     controller_config_arg=("--controllerconfig=${WORKLOAD_CONTROLLER_CONFIG_PATH}")
+    kubeconfig=""
+    if [[ -z "${KUBECONFIG:-}" ]]; then
+      kubeconfig="${CERT_DIR}/workload-controller.kubeconfig"
+    else 
+      kubeconfig="${KUBECONFIG}"
+    fi
+    if [ $# -lt 0 ]; then
+      kubeconfig = "${kubeconfig} $1"
+    fi
+    echo "The kubeconfig has been set ${kubeconfig}"
 
     WORKLOAD_CONTROLLER_LOG=${LOG_DIR}/workload-controller-manager.log
-    ${CONTROLPLANE_SUDO} "${GO_OUT}/workload-controller-manager" \
+    sudo -E "${GO_OUT}/workload-controller-manager" \
       --v="${LOG_LEVEL}" \
-      --kubeconfig "${CERT_DIR}/workload-controller.kubeconfig" \
+      --kubeconfig "${kubeconfig}" \
       "${controller_config_arg[@]}" >"${WORKLOAD_CONTROLLER_LOG}" 2>&1 &
     WORKLOAD_CTLRMGR_PID=$!
 }
