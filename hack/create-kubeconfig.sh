@@ -28,49 +28,48 @@ source "${KUBE_ROOT}/hack/lib/util.sh"
 # Ensure CERT_DIR is created for crt/key and kubeconfig
 mkdir -p "${CERT_DIR}" &>/dev/null || sudo mkdir -p "${CERT_DIR}"
 CONTROLPLANE_SUDO=$(test -w "${CERT_DIR}" || echo "sudo -E")
-
 # There are following commands to run the script
 # hack/create-kubeconfig.sh is to create a kubeconfig giving the following params
 # hack/create-kubeconfig.sh extract key is to extract content from an existing kubeconfig.
 if [ $# -lt 1 ] ; then
-  if [ -z "${KUBECONFIG_SERVER}" ]; then
-    echo "KUBECONFIG_SERVER has not been set"
-    exit 1
-  fi
-  if [ -z "${KUBECONFIG_CA}" ]; then
-    echo "KUBECONFIG_CA has not been set"
-    exit 1
-  fi
-  if [ -z "${KUBECONFIG_CERT}" ]; then
-    echo "KUBECONFIG_CERT has not been set"
-    exit 1
-  fi
-  if [ -z "${KUBECONFIG_KEY}" ]; then
-    echo "KUBECONFIG_KEY has not been set"
-    exit 1
-  fi
-  server=${KUBECONFIG_SERVER}
-  protocal="$(cut -d':' -f1 <<<"$server")"
-  url="$(cut -d':' -f2<<<"$server")"
-  ports="$(cut -d':' -f3<<<"$server")"
-  port="$(cut -d'/' -f1<<<"$ports")"
-
-  ${CONTROLPLANE_SUDO}  sh -c 'echo ${KUBECONFIG_CA}   | base64 -d > ${CERT_DIR}/ca-${CERT_ROOTNAME}.crt'
-  ${CONTROLPLANE_SUDO}  sh -c 'echo ${KUBECONFIG_CERT} | base64 -d > ${CERT_DIR}/client-${CERT_ROOTNAME}.crt'
-  ${CONTROLPLANE_SUDO}  sh -c 'echo ${KUBECONFIG_KEY}  | base64 -d > ${CERT_DIR}/client-${CERT_ROOTNAME}.key'
-
-  kube::util::write_client_kubeconfig "${CONTROLPLANE_SUDO}" "${CERT_DIR}" "ca-${CERT_ROOTNAME}.crt" "$protocal:$url" $port ${CERT_ROOTNAME}
-
+  echo "Not enough params"
 else
   echo "The current operation is $1"
   case $1 in
     extract)
-      echo "Here is $2"
-      echo "${CERT_DIR}/admin.kubeconfig"
       if [ -n "$2" ]; then
         ${CONTROLPLANE_SUDO} grep $2 ${CERT_DIR}/admin.kubeconfig | awk '{print $2}'
       fi
       ;;
+    extractall)
+      ${CONTROLPLANE_SUDO} grep server ${CERT_DIR}/admin.kubeconfig | awk '{print $2}'
+      ${CONTROLPLANE_SUDO} grep certificate-authority-data ${CERT_DIR}/admin.kubeconfig | awk '{print $2}'
+      ${CONTROLPLANE_SUDO} grep client-certificate-data ${CERT_DIR}/admin.kubeconfig | awk '{print $2}'
+      ${CONTROLPLANE_SUDO} grep client-key-data ${CERT_DIR}/admin.kubeconfig | awk '{print $2}'
+      ;;
+    create)
+       ${CONTROLPLANE_SUDO} cat <<EOF > ${CERT_DIR}/${CERT_ROOTNAME}.kubeconfig
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: $3  
+    server: $2
+  name: local-up-cluster
+contexts:
+- context:
+    cluster: local-up-cluster
+    user: local-up-cluster
+  name: local-up-cluster
+current-context: local-up-cluster
+kind: Config
+preferences: {}
+users:
+- name: local-up-cluster
+  user:
+    client-certificate-data: $4
+    client-key-data: $5
+EOF
+       ;;
     *)
       echo "Unknown operation"
       ;;

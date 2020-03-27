@@ -48,6 +48,7 @@ KUBELET_AUTHENTICATION_WEBHOOK=${KUBELET_AUTHENTICATION_WEBHOOK:-""}
 POD_MANIFEST_PATH=${POD_MANIFEST_PATH:-"/var/run/kubernetes/static-pods"}
 KUBELET_FLAGS=${KUBELET_FLAGS:-""}
 KUBELET_IMAGE=${KUBELET_IMAGE:-""}
+
 # many dev environments run with swap on, so we don't fail in this env
 FAIL_SWAP_ON=${FAIL_SWAP_ON:-"false"}
 # Name of the network plugin, eg: "kubenet"
@@ -100,6 +101,7 @@ STORAGE_BACKEND=${STORAGE_BACKEND:-"etcd3"}
 STORAGE_MEDIA_TYPE=${STORAGE_MEDIA_TYPE:-""}
 # preserve etcd data. you also need to set ETCD_DIR.
 PRESERVE_ETCD="${PRESERVE_ETCD:-false}"
+ETCD_STARTED="${ETCD_STARTED:-false}"
 # enable Pod priority and preemption
 ENABLE_POD_PRIORITY_PREEMPTION=${ENABLE_POD_PRIORITY_PREEMPTION:-""}
 
@@ -145,6 +147,9 @@ AUDIT_POLICY_FILE=${AUDIT_POLICY_FILE:-""}
 APISERVER_NUMBER=${APISERVER_NUMBER:-"1"}
 # Kube-apiserver service group id
 APISERVER_SERVICEGROUPID=${APISERVER_SERVICEGROUPID:-"1"}
+
+ALLOW_WORKLOAD_CM=${ALLOW_WORKLOAD_CM:-"true"}
+
 
 # sanity check for OpenStack provider
 if [ "${CLOUD_PROVIDER}" == "openstack" ]; then
@@ -222,6 +227,8 @@ fi
 source ${KUBE_ROOT}/hack/arktos-cni.rc
 
 source "${KUBE_ROOT}/hack/lib/init.sh"
+
+source "${KUBE_ROOT}/hack/lib/common.sh"
 kube::util::ensure-gnu-sed
 
 function usage {
@@ -232,50 +239,7 @@ function usage {
             echo "Example 3: hack/local-up-cluster.sh (build a local copy of the source)"
 }
 
-# This function guesses where the existing cached binary build is for the `-O`
-# flag
-function guess_built_binary_path {
-  local hyperkube_path
-  hyperkube_path=$(kube::util::find-binary "hyperkube")
-  if [[ -z "${hyperkube_path}" ]]; then
-    return
-  fi
-  echo -n "$(dirname "${hyperkube_path}")"
-}
-
-### Allow user to supply the source directory.
-GO_OUT=${GO_OUT:-}
-while getopts "ho:O" OPTION
-do
-    case ${OPTION} in
-        o)
-            echo "skipping build"
-            GO_OUT="${OPTARG}"
-            echo "using source ${GO_OUT}"
-            ;;
-        O)
-            GO_OUT=$(guess_built_binary_path)
-            if [ "${GO_OUT}" == "" ]; then
-                echo "Could not guess the correct output directory to use."
-                exit 1
-            fi
-            ;;
-        h)
-            usage
-            exit
-            ;;
-        ?)
-            usage
-            exit
-            ;;
-    esac
-done
-
-if [ "x${GO_OUT}" == "x" ]; then
-    make -C "${KUBE_ROOT}" WHAT="cmd/kubectl cmd/hyperkube cmd/kube-apiserver cmd/kube-controller-manager cmd/workload-controller-manager cmd/cloud-controller-manager cmd/kubelet cmd/kube-proxy cmd/kube-scheduler"
-else
-    echo "skipped the build."
-fi
+kube::common::build
 
 # Shut down anyway if there's an error.
 set +e
@@ -339,77 +303,7 @@ fi
 mkdir -p "${CERT_DIR}" &>/dev/null || sudo mkdir -p "${CERT_DIR}"
 CONTROLPLANE_SUDO=$(test -w "${CERT_DIR}" || echo "sudo -E")
 
-function test_apiserver_off {
-    # For the common local scenario, fail fast if server is already running.
-    # this can happen if you run local-up-cluster.sh twice and kill etcd in between.
-    if [[ "${API_PORT}" -gt "0" ]]; then
-        if ! curl --silent -g "${API_HOST}:${API_PORT}" ; then
-            echo "API SERVER insecure port is free, proceeding..."
-        else
-            echo "ERROR starting API SERVER, exiting. Some process on ${API_HOST} is serving already on ${API_PORT}"
-            exit 1
-        fi
-    fi
 
-    if ! curl --silent -k -g "${API_HOST}:${API_SECURE_PORT}" ; then
-        echo "API SERVER secure port is free, proceeding..."
-    else
-        echo "ERROR starting API SERVER, exiting. Some process on ${API_HOST} is serving already on ${API_SECURE_PORT}"
-        exit 1
-    fi
-}
-
-function detect_binary {
-    # Detect the OS name/arch so that we can find our binary
-    case "$(uname -s)" in
-      Darwin)
-        host_os=darwin
-        ;;
-      Linux)
-        host_os=linux
-        ;;
-      *)
-        echo "Unsupported host OS.  Must be Linux or Mac OS X." >&2
-        exit 1
-        ;;
-    esac
-
-    case "$(uname -m)" in
-      x86_64*)
-        host_arch=amd64
-        ;;
-      i?86_64*)
-        host_arch=amd64
-        ;;
-      amd64*)
-        host_arch=amd64
-        ;;
-      aarch64*)
-        host_arch=arm64
-        ;;
-      arm64*)
-        host_arch=arm64
-        ;;
-      arm*)
-        host_arch=arm
-        ;;
-      i?86*)
-        host_arch=x86
-        ;;
-      s390x*)
-        host_arch=s390x
-        ;;
-      ppc64le*)
-        host_arch=ppc64le
-        ;;
-      *)
-        echo "Unsupported host arch. Must be x86_64, 386, arm, arm64, s390x or ppc64le." >&2
-        exit 1
-        ;;
-    esac
-
-   GO_OUT="${KUBE_ROOT}/_output/local/bin/${host_os}/${host_arch}"
-}
 
 cleanup()
 {
@@ -528,20 +422,15 @@ function warning_log {
 }
 
 function start_etcd {
-    echo "Starting etcd"
-    export ETCD_LOGFILE=${LOG_DIR}/etcd.log
-    kube::etcd::start
-}
-
-function set_service_accounts {
-    SERVICE_ACCOUNT_LOOKUP=${SERVICE_ACCOUNT_LOOKUP:-true}
-    SERVICE_ACCOUNT_KEY=${SERVICE_ACCOUNT_KEY:-/tmp/kube-serviceaccount.key}
-    # Generate ServiceAccount key if needed
-    if [[ ! -f "${SERVICE_ACCOUNT_KEY}" ]]; then
-      mkdir -p "$(dirname "${SERVICE_ACCOUNT_KEY}")"
-      openssl genrsa -out "${SERVICE_ACCOUNT_KEY}" 2048 2>/dev/null
+    if [[ "${ETCD_STARTED}" == true ]]; then
+      echo "Etcd has been started"
+    else
+      echo "Starting etcd"
+      export ETCD_LOGFILE=${LOG_DIR}/etcd.log
+      kube::etcd::start
     fi
 }
+
 
 function generate_certs {
     # Create CA signers
@@ -602,22 +491,25 @@ function start_apiserver {
     ${CONTROLPLANE_SUDO} rm -f  $configfilepath
     ${CONTROLPLANE_SUDO} cp hack/apiserver.config $configfilepath
     echo "Creating apiserver partition config file  $configfilepath..."
+    partition_begin=""
+    partition_end=""
+    if [ $# -gt 1 ]; then
+      partition_begin=$2
+    fi
+    if [ $# -gt 2 ]; then
+      partition_end=$3
+    fi
+    echo "The partition has been set to [${partition_begin}, ${partition_end})"
 
-    previous=tenant$(($1+1))
-    if [[ $1 -eq 0 ]]; then
-      previous=
-    fi
-    partition_end=tenant$(($1+2))
-    if [[ "$(($1 + 1))" -eq "${APISERVER_NUMBER}" ]]; then
-      partition_end=
-    fi
-    ${CONTROLPLANE_SUDO}  sed -i "s/tenant_begin,tenant_end/${previous},${partition_end}/gi"  $configfilepath
+    
+    ${CONTROLPLANE_SUDO}  sed -i "s/tenant_begin,tenant_end/${partition_begin}, ${partition_end})/gi"  $configfilepath
     security_admission=""
     if [[ -n "${DENY_SECURITY_CONTEXT_ADMISSION}" ]]; then
       security_admission=",SecurityContextDeny"
     fi
     if [[ -n "${PSP_ADMISSION}" ]]; then
-      security_admission=",PodSecurityPolicy"
+    
+    security_admission=",PodSecurityPolicy"
     fi
     if [[ -n "${NODE_ADMISSION}" ]]; then
       security_admission=",NodeRestriction"
@@ -800,25 +692,7 @@ function start_controller_manager {
     CTLRMGR_PID=$!
 }
 
-function start_workload_controller_manager {
-    controller_config_arg=("--controllerconfig=${WORKLOAD_CONTROLLER_CONFIG_PATH}")
 
-    kubeconfigfilepaths="${CERT_DIR}/workload-controller.kubeconfig"
-
-    if [ "${APISERVER_NUMBER}" > "1" ]; then
-        kubeconfigfilepaths=""
-        for ((i=0; i<=$((APISERVER_NUMBER - 1)) ; i++)); do
-          kubeconfigfilepaths+="${CERT_DIR}/workload-controller$i.kubeconfig "
-        done
-    fi
-
-    WORKLOAD_CONTROLLER_LOG=${LOG_DIR}/workload-controller-manager.log
-    ${CONTROLPLANE_SUDO} "${GO_OUT}/workload-controller-manager" \
-      --v="${LOG_LEVEL}" \
-      --kubeconfig "$kubeconfigfilepaths" \
-      "${controller_config_arg[@]}" >"${WORKLOAD_CONTROLLER_LOG}" 2>&1 &
-    WORKLOAD_CTLRMGR_PID=$!
-}
 
 function start_cloud_controller_manager {
     if [ -z "${CLOUD_CONFIG}" ]; then
@@ -1156,7 +1030,7 @@ if [[ "${KUBETEST_IN_DOCKER:-}" == "true" ]]; then
 fi
 
 # validate that etcd is: not running, in path, and has minimum required version.
-if [[ "${START_MODE}" != "kubeletonly" ]]; then
+if [[ "${START_MODE}" != "kubeletonly" && "${ETCD_STARTED}" != true ]]; then
   kube::etcd::validate
 fi
 
@@ -1165,7 +1039,7 @@ if [ "${CONTAINER_RUNTIME}" == "docker" ] && ! kube::util::ensure_docker_daemon_
 fi
 
 if [[ "${START_MODE}" != "kubeletonly" ]]; then
-  test_apiserver_off
+  kube::common::test_apiserver_off
 fi
 
 kube::util::test_openssl_installed
@@ -1173,7 +1047,7 @@ kube::util::ensure-cfssl
 
 ### IF the user didn't supply an output/ for the build... Then we detect.
 if [ "${GO_OUT}" == "" ]; then
-  detect_binary
+  kube::common::detect_binary
 fi
 echo "Detected host and ready to start services.  Doing some housekeeping first..."
 echo "Using GO_OUT ${GO_OUT}"
@@ -1185,12 +1059,21 @@ fi
 echo "Starting services now!"
 if [[ "${START_MODE}" != "kubeletonly" ]]; then
   start_etcd
-  set_service_accounts
+  kube::common::set_service_accounts
   echo "Starting ${APISERVER_NUMBER} kube-apiserver instances. If you want to make changes to the kube-apiserver nubmer, please run export APISERVER_SERVER=n(n=1,2,...). "
   APISERVER_PID_ARRAY=()
-  previous=
+  partition_begin=""
+  partition_end=""
+  if [ $# -gt 0 ]; then
+    partition_begin=$1
+  fi
+  if [ $# -gt 1 ]; then
+    partition_end=$2
+  fi
+  echo "The partition has been set to [${partition_begin}, ${partition_end})"
+  
   for ((i = $((APISERVER_NUMBER - 1)) ; i >= 0 ; i--)); do
-    start_apiserver $i
+    kube::common::start_apiserver $i $partition_begin $partition_end
   done
   #remove workload controller manager cluster role and rolebinding applying per this already be added to bootstrappolicy
   
@@ -1200,7 +1083,9 @@ if [[ "${START_MODE}" != "kubeletonly" ]]; then
   #cluster/kubectl.sh create -f hack/runtime/workload-controller-manager-clusterrolebinding.yaml
 
   start_controller_manager
-  start_workload_controller_manager
+  if [[ "${ALLOW_WORKLOAD_CM:-}" == "true" ]]; then
+     kube::common::start_workload_controller_manager
+  fi
   if [[ "${EXTERNAL_CLOUD_PROVIDER:-}" == "true" ]]; then
     start_cloud_controller_manager
   fi
