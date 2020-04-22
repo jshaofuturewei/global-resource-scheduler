@@ -6,13 +6,13 @@ go 1.12
 
 require (
 	github.com/blang/semver v3.5.0+incompatible
-	github.com/prometheus/client_golang v0.9.2
-	github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910
+	github.com/prometheus/client_golang v1.0.0
+	github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 	github.com/prometheus/common v0.0.0-20181126121408-4724e9255275
 	github.com/prometheus/procfs v0.0.0-20181204211112-1dc9a6cbc91a
 	github.com/spf13/pflag v1.0.3
 	github.com/stretchr/testify v1.3.0
-	k8s.io/apimachinery v0.0.0
+	k8s.io/apimachinery v0.0.0-00010101000000-000000000000
 	k8s.io/klog v0.4.0
 	k8s.io/utils v0.0.0-20190801114015-581e00157fb1
 )
@@ -27,6 +27,8 @@ replace (
 	github.com/json-iterator/go => github.com/json-iterator/go v0.0.0-20180701071628-ab8a2e0c74be
 	github.com/onsi/ginkgo => github.com/onsi/ginkgo v1.6.0
 	github.com/onsi/gomega => github.com/onsi/gomega v0.0.0-20190113212917-5533ce8a0da3
+	github.com/prometheus/client_golang => github.com/prometheus/client_golang v0.9.2
+	github.com/prometheus/client_model => github.com/prometheus/client_model v0.0.0-20180712105110-5c3871d89910
 	github.com/spf13/pflag => github.com/spf13/pflag v1.0.1
 	github.com/stretchr/testify => github.com/stretchr/testify v1.2.2
 	golang.org/x/net => golang.org/x/net v0.0.0-20190206173232-65e2d4e15006

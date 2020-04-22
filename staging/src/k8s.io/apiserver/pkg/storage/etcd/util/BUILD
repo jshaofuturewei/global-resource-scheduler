@@ -11,8 +11,8 @@ go_test(
     srcs = ["etcd_util_test.go"],
     embed = [":go_default_library"],
     deps = [
-        "//vendor/github.com/coreos/etcd/client:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
+        "//vendor/go.etcd.io/etcd/client:go_default_library",
     ],
 )
 
@@ -24,7 +24,7 @@ go_library(
     ],
     importmap = "k8s.io/kubernetes/vendor/k8s.io/apiserver/pkg/storage/etcd/util",
     importpath = "k8s.io/apiserver/pkg/storage/etcd/util",
-    deps = ["//vendor/github.com/coreos/etcd/client:go_default_library"],
+    deps = ["//vendor/go.etcd.io/etcd/client:go_default_library"],
 )
 
 filegroup(

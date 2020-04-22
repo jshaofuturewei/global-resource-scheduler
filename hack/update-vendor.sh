@@ -216,9 +216,9 @@ for repo in $(cat "${TMP_DIR}/tidy_unordered.txt"); do
     echo "=== sorting ${repo}" >> "${LOG_FILE}"
     # 'go list' calculates direct imports and updates go.mod so that go list -m lists our module dependencies
     echo "=== computing imports for ${repo}" >> "${LOG_FILE}"
-    go list all >>"${LOG_FILE}" 2>&1
+    #go list all >>"${LOG_FILE}" 2>&1
     echo "=== computing tools imports for ${repo}" >> "${LOG_FILE}"
-    go list -tags=tools all >>"${LOG_FILE}" 2>&1
+    #go list -tags=tools all >>"${LOG_FILE}" 2>&1
 
     # capture module dependencies 
     go list -m -f '{{if not .Main}}{{.Path}}{{end}}' all > "${tmp_go_deps}"

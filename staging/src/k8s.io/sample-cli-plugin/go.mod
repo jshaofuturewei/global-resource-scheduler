@@ -5,10 +5,18 @@ module k8s.io/sample-cli-plugin
 go 1.12
 
 require (
+	github.com/PuerkitoBio/purell v1.1.1 // indirect
+	github.com/emicklei/go-restful v2.9.5+incompatible // indirect
+	github.com/ghodss/yaml v0.0.0-20180820084758-c7ce16629ff4 // indirect
+	github.com/go-openapi/jsonpointer v0.19.0 // indirect
+	github.com/go-openapi/jsonreference v0.19.0 // indirect
+	github.com/go-openapi/spec v0.19.2 // indirect
+	github.com/go-openapi/swag v0.17.2 // indirect
+	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.3
-	k8s.io/cli-runtime v0.0.0
-	k8s.io/client-go v0.0.0
+	k8s.io/cli-runtime v0.0.0-00010101000000-000000000000
+	k8s.io/client-go v0.0.0-00010101000000-000000000000
 )
 
 replace (
@@ -19,6 +27,7 @@ replace (
 	github.com/go-openapi/spec => github.com/go-openapi/spec v0.17.2
 	github.com/gogo/protobuf => github.com/gogo/protobuf v0.0.0-20171007142547-342cbe0a0415
 	github.com/golang/protobuf => github.com/golang/protobuf v1.2.0
+	github.com/google/btree => github.com/google/btree v0.0.0-20160524151835-7d79101e329e
 	github.com/google/gofuzz => github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 	github.com/google/uuid => github.com/google/uuid v1.0.0
 	github.com/hashicorp/golang-lru => github.com/hashicorp/golang-lru v0.5.0

@@ -5,10 +5,10 @@ module k8s.io/sample-controller
 go 1.12
 
 require (
-	k8s.io/api v0.0.0
-	k8s.io/apimachinery v0.0.0
-	k8s.io/client-go v0.0.0
-	k8s.io/code-generator v0.0.0
+	k8s.io/api v0.0.0-00010101000000-000000000000
+	k8s.io/apimachinery v0.0.0-00010101000000-000000000000
+	k8s.io/client-go v0.0.0-00010101000000-000000000000
+	k8s.io/code-generator v0.0.0-00010101000000-000000000000
 	k8s.io/klog v0.4.0
 )
 
@@ -17,6 +17,7 @@ replace (
 	github.com/evanphx/json-patch => github.com/evanphx/json-patch v0.0.0-20190203023257-5858425f7550
 	github.com/gogo/protobuf => github.com/gogo/protobuf v0.0.0-20171007142547-342cbe0a0415
 	github.com/golang/protobuf => github.com/golang/protobuf v1.2.0
+	github.com/google/btree => github.com/google/btree v0.0.0-20160524151835-7d79101e329e
 	github.com/google/gofuzz => github.com/google/gofuzz v0.0.0-20170612174753-24818f796faf
 	github.com/google/uuid => github.com/google/uuid v1.0.0
 	github.com/hashicorp/golang-lru => github.com/hashicorp/golang-lru v0.5.0

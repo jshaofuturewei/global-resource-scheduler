@@ -10,7 +10,7 @@ require (
 	golang.org/x/tools v0.0.0-20190621195816-6e04913cbbac // indirect
 	gonum.org/v1/gonum v0.0.0-20190331200053-3d26580ed485
 	gonum.org/v1/netlib v0.0.0-20190331212654-76723241ea4e // indirect
-	k8s.io/apimachinery v0.0.0
+	k8s.io/apimachinery v0.0.0-00010101000000-000000000000
 	k8s.io/gengo v0.0.0-20190822140433-26a664648505
 	k8s.io/klog v0.4.0
 )
