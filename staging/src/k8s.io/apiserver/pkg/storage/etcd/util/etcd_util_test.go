@@ -26,7 +26,7 @@ import (
 	"testing"
 	"time"
 
-	etcd "github.com/coreos/etcd/client"
+	etcd "go.etcd.io/etcd/client"
 	"github.com/stretchr/testify/assert"
 )
 

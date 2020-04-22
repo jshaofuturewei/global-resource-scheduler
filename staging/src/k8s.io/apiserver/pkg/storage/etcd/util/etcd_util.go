@@ -22,7 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	etcd "github.com/coreos/etcd/client"
+	etcd "go.etcd.io/etcd/client"
 )
 
 // IsEtcdNotFound returns true if and only if err is an etcd not found error.

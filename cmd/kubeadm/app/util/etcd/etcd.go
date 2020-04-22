@@ -26,8 +26,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/coreos/etcd/clientv3"
-	"github.com/coreos/etcd/pkg/transport"
+	"go.etcd.io/etcd/clientv3"
+	"go.etcd.io/etcd/pkg/transport"
 	"github.com/pkg/errors"
 	clientset "k8s.io/client-go/kubernetes"
 	"k8s.io/klog"
@@ -140,7 +140,7 @@ func (c *Client) Sync() error {
 	return nil
 }
 
-// Member struct defines an etcd member; it is used for avoiding to spread github.com/coreos/etcd dependency
+// Member struct defines an etcd member; it is used for avoiding to spread go.etcd.io/etcd dependency
 // across kubeadm codebase
 type Member struct {
 	Name    string

@@ -27,7 +27,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/coreos/etcd/clientv3"
+	"go.etcd.io/etcd/clientv3"
 	"github.com/prometheus/client_golang/prometheus"
 	"sigs.k8s.io/yaml"
 

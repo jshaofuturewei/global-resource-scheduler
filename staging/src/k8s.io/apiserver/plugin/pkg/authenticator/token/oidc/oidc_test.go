@@ -35,7 +35,7 @@ import (
 	"text/template"
 	"time"
 
-	oidc "github.com/coreos/go-oidc"
+	oidc "go.etcd.io/go-oidc"
 	jose "gopkg.in/square/go-jose.v2"
 
 	"k8s.io/apiserver/pkg/authentication/authenticator"
