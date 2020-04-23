@@ -13,7 +13,7 @@ require (
 	golang.org/x/net v0.0.0-20190813141303-74dc4d7220e7
 	golang.org/x/sys v0.0.0-20190826190057-c7b8b68b1456 // indirect
 	golang.org/x/text v0.3.1-0.20181227161524-e6919f6577db // indirect
-	google.golang.org/grpc v1.23.0
+	google.golang.org/grpc v1.23.1
 )
 
 replace (

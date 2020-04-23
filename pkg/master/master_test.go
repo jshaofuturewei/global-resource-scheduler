@@ -41,7 +41,7 @@ import (
 	"k8s.io/apiserver/pkg/server/options"
 	"k8s.io/apiserver/pkg/server/resourceconfig"
 	serverstorage "k8s.io/apiserver/pkg/server/storage"
-	etcdtesting "k8s.io/apiserver/pkg/storage/etcd/testing"
+	etcdtesting "k8s.io/apiserver/pkg/storage/etcd3/testing"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/kubernetes"

@@ -32,7 +32,7 @@ import (
 	"k8s.io/apiserver/pkg/registry/generic"
 	genericregistry "k8s.io/apiserver/pkg/registry/generic/registry"
 	"k8s.io/apiserver/pkg/storage"
-	etcdtesting "k8s.io/apiserver/pkg/storage/etcd/testing"
+	etcdtesting "k8s.io/apiserver/pkg/storage/etcd3/testing"
 	"k8s.io/client-go/kubernetes/fake"
 	api "k8s.io/kubernetes/pkg/apis/core"
 	"k8s.io/kubernetes/pkg/apis/policy"

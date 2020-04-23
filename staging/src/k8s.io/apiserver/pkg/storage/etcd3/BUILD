@@ -38,13 +38,13 @@ go_test(
         "//staging/src/k8s.io/apiserver/pkg/storage/value:go_default_library",
         "//staging/src/k8s.io/apiserver/pkg/util/feature:go_default_library",
         "//staging/src/k8s.io/component-base/featuregate/testing:go_default_library",
+        "//vendor/github.com/coreos/pkg/capnslog:go_default_library",
         "//vendor/github.com/stretchr/testify/assert:go_default_library",
         "//vendor/github.com/stretchr/testify/require:go_default_library",
         "//vendor/go.etcd.io/etcd/clientv3:go_default_library",
         "//vendor/go.etcd.io/etcd/etcdserver/api/v3rpc/rpctypes:go_default_library",
         "//vendor/go.etcd.io/etcd/integration:go_default_library",
         "//vendor/go.etcd.io/etcd/mvcc/mvccpb:go_default_library",
-        "//vendor/go.etcd.io/pkg/capnslog:go_default_library",
         "//vendor/k8s.io/utils/pointer:go_default_library",
     ],
 )
@@ -73,7 +73,7 @@ go_library(
         "//staging/src/k8s.io/apiserver/pkg/features:go_default_library",
         "//staging/src/k8s.io/apiserver/pkg/storage:go_default_library",
         "//staging/src/k8s.io/apiserver/pkg/storage/etcd:go_default_library",
-        "//staging/src/k8s.io/apiserver/pkg/storage/etcd/metrics:go_default_library",
+        "//staging/src/k8s.io/apiserver/pkg/storage/etcd3/metrics:go_default_library",
         "//staging/src/k8s.io/apiserver/pkg/storage/value:go_default_library",
         "//staging/src/k8s.io/apiserver/pkg/util/feature:go_default_library",
         "//vendor/github.com/grafov/bcast:go_default_library",
@@ -96,7 +96,9 @@ filegroup(
     name = "all-srcs",
     srcs = [
         ":package-srcs",
+        "//staging/src/k8s.io/apiserver/pkg/storage/etcd3/metrics:all-srcs",
         "//staging/src/k8s.io/apiserver/pkg/storage/etcd3/preflight:all-srcs",
+        "//staging/src/k8s.io/apiserver/pkg/storage/etcd3/testing:all-srcs",
     ],
     tags = ["automanaged"],
 )

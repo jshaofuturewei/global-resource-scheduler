@@ -1,12 +1,9 @@
 /*
-Copyright 2015 The Kubernetes Authors.
-
+Copyright 2020 Authors of Arktos.
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
-
     http://www.apache.org/licenses/LICENSE-2.0
-
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -28,8 +25,7 @@ import (
 	"time"
 
 	"k8s.io/apimachinery/pkg/util/wait"
-	"k8s.io/apiserver/pkg/storage/etcd/etcdtest"
-	"k8s.io/apiserver/pkg/storage/etcd/testing/testingcert"
+	"k8s.io/apiserver/pkg/storage/etcd3/testing/testingcert"
 	"k8s.io/apiserver/pkg/storage/storagebackend"
 
 	"context"
@@ -43,6 +39,7 @@ import (
 	"go.etcd.io/etcd/pkg/testutil"
 	"go.etcd.io/etcd/pkg/transport"
 	"go.etcd.io/etcd/pkg/types"
+	"go.uber.org/zap"
 	"k8s.io/klog"
 )
 
@@ -86,9 +83,9 @@ func newSecuredLocalListener(t *testing.T, certFile, keyFile, caFile string) net
 		t.Fatal(err)
 	}
 	tlsInfo := transport.TLSInfo{
-		CertFile: certFile,
-		KeyFile:  keyFile,
-		CAFile:   caFile,
+		CertFile:      certFile,
+		KeyFile:       keyFile,
+		TrustedCAFile: caFile,
 	}
 	tlscfg, err := tlsInfo.ServerConfig()
 	if err != nil {
@@ -101,11 +98,12 @@ func newSecuredLocalListener(t *testing.T, certFile, keyFile, caFile string) net
 	return l
 }
 
-func newHttpTransport(t *testing.T, certFile, keyFile, caFile string) etcd.CancelableTransport {
+// newHTTPTransport create a new tls-based transport.
+func newHTTPTransport(t *testing.T, certFile, keyFile, caFile string) etcd.CancelableTransport {
 	tlsInfo := transport.TLSInfo{
-		CertFile: certFile,
-		KeyFile:  keyFile,
-		CAFile:   caFile,
+		CertFile:      certFile,
+		KeyFile:       keyFile,
+		TrustedCAFile: caFile,
 	}
 	tr, err := transport.NewTransport(tlsInfo, time.Second)
 	if err != nil {
@@ -194,7 +192,7 @@ func (m *EtcdTestServer) launch(t *testing.T) error {
 	}
 	m.s.SyncTicker = time.NewTicker(500 * time.Millisecond)
 	m.s.Start()
-	m.raftHandler = &testutil.PauseableHandler{Next: etcdhttp.NewPeerHandler(m.s)}
+	m.raftHandler = &testutil.PauseableHandler{Next: etcdhttp.NewPeerHandler(zap.NewExample(), m.s)}
 	for _, ln := range m.PeerListeners {
 		hs := &httptest.Server{
 			Listener: ln,
@@ -206,7 +204,7 @@ func (m *EtcdTestServer) launch(t *testing.T) error {
 	for _, ln := range m.ClientListeners {
 		hs := &httptest.Server{
 			Listener: ln,
-			Config:   &http.Server{Handler: v2http.NewClientHandler(m.s, m.ServerConfig.ReqTimeout())},
+			Config:   &http.Server{Handler: v2http.NewClientHandler(zap.NewExample(), m.s, m.ServerConfig.ReqTimeout())},
 		}
 		hs.Start()
 		m.hss = append(m.hss, hs)
@@ -270,7 +268,7 @@ func NewEtcdTestClientServer(t *testing.T) *EtcdTestServer {
 
 	cfg := etcd.Config{
 		Endpoints: server.ClientURLs.StringSlice(),
-		Transport: newHttpTransport(t, server.CertFile, server.KeyFile, server.CAFile),
+		Transport: newHTTPTransport(t, server.CertFile, server.KeyFile, server.CAFile),
 	}
 	server.Client, err = etcd.New(cfg)
 	if err != nil {
@@ -286,7 +284,7 @@ func NewEtcdTestClientServer(t *testing.T) *EtcdTestServer {
 	return server
 }
 
-// NewEtcd3TestClientServer creates a new client and server for testing
+// NewUnsecuredEtcd3TestClientServer creates a new client and server for testing
 func NewUnsecuredEtcd3TestClientServer(t *testing.T) (*EtcdTestServer, *storagebackend.Config) {
 	server := &EtcdTestServer{
 		v3Cluster: integration.NewClusterV3(t, &integration.ClusterConfig{Size: 1}),
@@ -294,7 +292,7 @@ func NewUnsecuredEtcd3TestClientServer(t *testing.T) (*EtcdTestServer, *storageb
 	server.V3Client = server.v3Cluster.RandClient()
 	config := &storagebackend.Config{
 		Type:   "etcd3",
-		Prefix: etcdtest.PathPrefix(),
+		Prefix: PathPrefix(),
 		Transport: storagebackend.TransportConfig{
 			ServerList: server.V3Client.Endpoints(),
 		},

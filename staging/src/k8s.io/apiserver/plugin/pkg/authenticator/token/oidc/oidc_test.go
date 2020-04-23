@@ -1,5 +1,6 @@
 /*
 Copyright 2015 The Kubernetes Authors.
+Copyright 2020 Authors of Arktos - file modified.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,7 +36,7 @@ import (
 	"text/template"
 	"time"
 
-	oidc "go.etcd.io/go-oidc"
+	oidc "github.com/coreos/go-oidc"
 	jose "gopkg.in/square/go-jose.v2"
 
 	"k8s.io/apiserver/pkg/authentication/authenticator"

@@ -2,6 +2,7 @@
 
 /*
 Copyright 2018 The Kubernetes Authors.
+Copyright 2020 Authors of Arktos - file modified.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -40,8 +41,7 @@ import (
 )
 
 var (
-	testSupportedVersions = MustParseSupportedVersions("2.2.1, 2.3.7, 3.0.17, 3.1.12")
-	testVersionOldest     = &EtcdVersion{semver.MustParse("2.2.1")}
+	testSupportedVersions = MustParseSupportedVersions("3.0.17, 3.1.12")
 	testVersionPrevious   = &EtcdVersion{semver.MustParse("3.0.17")}
 	testVersionLatest     = &EtcdVersion{semver.MustParse("3.1.12")}
 )
@@ -55,15 +55,13 @@ func TestMigrate(t *testing.T) {
 		protocol     string
 	}{
 		// upgrades
-		{"v2-v3-up", 1, "2.2.1/etcd2", "3.0.17/etcd3", "https"},
 		{"v3-v3-up", 1, "3.0.17/etcd3", "3.1.12/etcd3", "https"},
-		{"oldest-newest-up", 1, "2.2.1/etcd2", "3.1.12/etcd3", "https"},
+		{"oldest-newest-up", 1, "3.0.17/etcd2", "3.1.12/etcd3", "https"},
 
 		// warning: v2->v3 ha upgrades not currently supported.
 		{"ha-v3-v3-up", 3, "3.0.17/etcd3", "3.1.12/etcd3", "https"},
 
 		// downgrades
-		{"v3-v2-down", 1, "3.0.17/etcd3", "2.2.1/etcd2", "https"},
 		{"v3-v3-down", 1, "3.1.12/etcd3", "3.0.17/etcd3", "https"},
 
 		// warning: ha downgrades not yet supported.

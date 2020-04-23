@@ -34,7 +34,7 @@ import (
 	"strings"
 	"time"
 
-	"go.etcd.io/go-systemd/daemon"
+	"github.com/coreos/go-systemd/daemon"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"k8s.io/klog"
