@@ -283,6 +283,10 @@ func (wc *watchChan) startWatching(watchClosedCh chan struct{}) {
 		wc.key = wc.keyRange.begin
 		opts = append(opts, clientv3.WithRange(wc.keyRange.end))
 		klog.V(3).Infof("The updated key range wc.key=%v, wc.withRange=%v ", wc.key, wc.keyRange.end)
+	} else if wc.keyRange.end == "" {
+		wc.key = wc.keyRange.begin
+                opts = append(opts, clientv3.WithRange(clientv3.GetPrefixRangeEnd(wc.keyRange.begin)))
+                klog.V(3).Infof("The updated key range wc.key=%v, wc.withRange=%v ", wc.key, clientv3.GetPrefixRangeEnd(wc.keyRange.begin))
 	}
 
 	wch := wc.watcher.client.Watch(wc.ctx, wc.key, opts...)
@@ -320,6 +324,7 @@ func GetKeyAndOptFromPartitionConfig(key string, partitionConfig map[string]stor
 	var res []keyRange
 
 	if val, ok := partitionConfig[key]; ok {
+		key += "system/"
 		updatedKey := key
 		updatedEnd := key
 		// The interval end is not empty.
