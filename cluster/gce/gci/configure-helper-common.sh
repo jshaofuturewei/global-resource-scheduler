@@ -2045,9 +2045,9 @@ function start-kube-controller-manager {
   params+=" --cloud-provider=gce"
   params+=" --kubeconfig=/etc/srv/kubernetes/kube-controller-manager/kubeconfig"
   ##switch to enable/disable kube-controller-manager leader-elect: --leader-elect=true/false
-  if [[ "${ENABLE_KCM_LEADER_ELECT:-true}" == "false" ]]; then
+  #if [[ "${ENABLE_KCM_LEADER_ELECT:-true}" == "false" ]]; then
     params+=" --leader-elect=false"
-  fi
+  #fi
   params+=" --root-ca-file=${CA_CERT_BUNDLE_PATH}"
   params+=" --service-account-private-key-file=${SERVICEACCOUNT_KEY_PATH}"
   if [[ -n "${ENABLE_GARBAGE_COLLECTOR:-}" ]]; then
@@ -2195,9 +2195,9 @@ function start-kube-scheduler {
   params="${SCHEDULER_TEST_LOG_LEVEL:-"--v=4"} ${SCHEDULER_TEST_ARGS:-}"
   params+=" --kubeconfig=/etc/srv/kubernetes/kube-scheduler/kubeconfig"
   ##switch to enable/disable kube-controller-manager leader-elect: --leader-elect=true/false
-  if [[ "${ENABLE_SCHEDULER_LEADER_ELECT:-true}" == "false" ]]; then
+  #if [[ "${ENABLE_SCHEDULER_LEADER_ELECT:-true}" == "false" ]]; then
     params+=" --leader-elect=false"
-  fi
+  #fi
   if [[ -n "${FEATURE_GATES:-}" ]]; then
     params+=" --feature-gates=${FEATURE_GATES}"
   fi
