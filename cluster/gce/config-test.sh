@@ -192,15 +192,17 @@ ENABLE_METRICS_SERVER="${KUBE_ENABLE_METRICS_SERVER:-true}"
 # running on the same node for exporting metrics and logs.
 ENABLE_METADATA_AGENT="${KUBE_ENABLE_METADATA_AGENT:-none}"
 
+ENABLE_APISERVER_INSECURE_PORT="${ENABLE_APISERVER_INSECURE_PORT:-true}"
+
 # One special node out of NUM_NODES would be created of this type if specified.
 # Useful for scheduling heapster in large clusters with nodes of small size.
 HEAPSTER_MACHINE_TYPE="${HEAPSTER_MACHINE_TYPE:-}"
 
 # Set etcd image (e.g. k8s.gcr.io/etcd) and version (e.g. 3.4.4-0) if you need
 # non-default version.
-ETCD_IMAGE="${TEST_ETCD_IMAGE:-}"
+ETCD_IMAGE="${ETCD_IMAGE:-3.4.3-0}"
 ETCD_DOCKER_REPOSITORY="${TEST_ETCD_DOCKER_REPOSITORY:-}"
-ETCD_VERSION="${TEST_ETCD_VERSION:-}"
+ETCD_VERSION="${ETCD_VERSION:-3.4.3}"
 
 # Default Log level for all components in test clusters and variables to override it in specific components.
 TEST_CLUSTER_LOG_LEVEL="${TEST_CLUSTER_LOG_LEVEL:---v=4}"

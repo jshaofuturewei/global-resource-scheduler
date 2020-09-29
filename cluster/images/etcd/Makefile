@@ -27,15 +27,18 @@
 # Except from etcd-$(version) and etcdctl-$(version) binaries, we also
 # need etcd and etcdctl binaries for backward compatibility reasons.
 # That binary will be set to the last version from $(BUNDLED_ETCD_VERSIONS).
-BUNDLED_ETCD_VERSIONS?=3.4.4
+
+# ETCD branch to build etcd binaries
+ETCD_BRANCH?=release-3.4-ETCDPartition-RevGeneration
+BUNDLED_ETCD_VERSIONS?=3.4.3
 
 # LATEST_ETCD_VERSION identifies the most recent etcd version available.
-LATEST_ETCD_VERSION?=3.4.4
+LATEST_ETCD_VERSION?=3.4.3
 
 # REVISION provides a version number fo this image and all it's bundled
 # artifacts. It should start at zero for each LATEST_ETCD_VERSION and increment
 # for each revision of this image at that etcd version.
-REVISION?=1
+REVISION?=0
 
 # IMAGE_TAG Uniquely identifies k8s.gcr.io/etcd docker image with a tag of the form "<etcd-version>-<revision>".
 IMAGE_TAG=$(LATEST_ETCD_VERSION)-$(REVISION)
@@ -58,19 +61,19 @@ GOARM=7
 TEMP_DIR:=$(shell mktemp -d)
 
 ifeq ($(ARCH),amd64)
-    BASEIMAGE?=k8s.gcr.io/debian-base:v1.0.0
+    BASEIMAGE?=us.gcr.io/k8s-artifacts-prod/build-image/debian-base:v2.1.0
 endif
 ifeq ($(ARCH),arm)
-    BASEIMAGE?=k8s.gcr.io/debian-base-arm:v1.0.0
+    BASEIMAGE?=us.gcr.io/k8s-artifacts-prod/build-image/debian-base-arm:v2.1.0
 endif
 ifeq ($(ARCH),arm64)
-    BASEIMAGE?=k8s.gcr.io/debian-base-arm64:v1.0.0
+    BASEIMAGE?=us.gcr.io/k8s-artifacts-prod/build-image/debian-base-arm64:v2.1.0
 endif
 ifeq ($(ARCH),ppc64le)
-    BASEIMAGE?=k8s.gcr.io/debian-base-ppc64le:v1.0.0
+    BASEIMAGE?=us.gcr.io/k8s-artifacts-prod/build-image/debian-base-ppc64le:v2.1.0
 endif
 ifeq ($(ARCH),s390x)
-    BASEIMAGE?=k8s.gcr.io/debian-base-s390x:v1.0.0
+    BASEIMAGE?=us.gcr.io/k8s-artifacts-prod/build-image/debian-base-s390x:v2.1.0
 endif
 
 build:
