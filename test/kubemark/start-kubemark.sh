@@ -177,7 +177,7 @@ function wait-for-hollow-nodes-to-run-or-timeout {
     sleep 1
     now=$(date +%s)
     # Fail it if it already took more than 30 minutes.
-    if [ $((now - start)) -gt 1800 ]; then
+    if [ $((now - start)) -gt 4200 ]; then
       echo ""
       # shellcheck disable=SC2154 # Color defined in sourced script
       echo -e "${color_red} Timeout waiting for all hollow-nodes to become Running. ${color_norm}"

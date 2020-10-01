@@ -591,3 +591,6 @@ fi
 install-kube-binary-config
 
 echo "Done for installing kubernetes files"
+
+echo "Enabling coredump"
+ulimit -c unlimited

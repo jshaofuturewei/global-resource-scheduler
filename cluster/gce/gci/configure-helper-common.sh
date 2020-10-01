@@ -2032,6 +2032,7 @@ function start-kube-controller-manager {
   prepare-log-file /var/log/kube-controller-manager.log
   # Calculate variables and assemble the command line.
   local params="${CONTROLLER_MANAGER_TEST_LOG_LEVEL:-"--v=4"} ${CONTROLLER_MANAGER_TEST_ARGS:-} ${CLOUD_CONFIG_OPT}"
+  params+=" --leader-elect=false"
   params+=" --use-service-account-credentials"
   params+=" --cloud-provider=gce"
   params+=" --kubeconfig=/etc/srv/kubernetes/kube-controller-manager/kubeconfig"
@@ -2180,6 +2181,7 @@ function start-kube-scheduler {
   # Calculate variables and set them in the manifest.
   params="${SCHEDULER_TEST_LOG_LEVEL:-"--v=4"} ${SCHEDULER_TEST_ARGS:-}"
   params+=" --kubeconfig=/etc/srv/kubernetes/kube-scheduler/kubeconfig"
+  params+=" --leader-elect=false"
   if [[ -n "${FEATURE_GATES:-}" ]]; then
     params+=" --feature-gates=${FEATURE_GATES}"
   fi
