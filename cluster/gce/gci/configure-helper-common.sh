@@ -1618,11 +1618,11 @@ function start-kube-apiserver {
   fi
   if [[ -n "${NUM_NODES:-}" ]]; then
     # If the cluster is large, increase max-requests-inflight limit in apiserver.
-    if [[ "${NUM_NODES}" -gt 3000 ]]; then
-      params+=" --max-requests-inflight=3000 --max-mutating-requests-inflight=1000"
-    elif [[ "${NUM_NODES}" -gt 500 ]]; then
-      params+=" --max-requests-inflight=1500 --max-mutating-requests-inflight=500"
-    fi
+    #if [[ "${NUM_NODES}" -gt 3000 ]]; then
+      params+=" --max-requests-inflight=0 --max-mutating-requests-inflight=0 --max-connection-bytes-per-sec=0 - --min-request-timeout=1800"
+    #elif [[ "${NUM_NODES}" -gt 500 ]]; then
+    #  params+=" --max-requests-inflight=0 --max-mutating-requests-inflight=0 --max-connection-bytes-per-sec=0 - --min-request-timeout=1800"
+    #fi
     # Set amount of memory available for apiserver based on number of nodes.
     # TODO: Once we start setting proper requests and limits for apiserver
     # we should reuse the same logic here instead of current heuristic.
@@ -1754,9 +1754,10 @@ function start-kube-apiserver {
     fi
   fi
 
-  if [[ -n "${KUBE_APISERVER_REQUEST_TIMEOUT:-}" ]]; then
-    params+=" --min-request-timeout=${KUBE_APISERVER_REQUEST_TIMEOUT}"
-  fi
+  #if [[ -n "${KUBE_APISERVER_REQUEST_TIMEOUT:-}" ]]; then
+  #  params+=" --min-request-timeout=${KUBE_APISERVER_REQUEST_TIMEOUT}"
+  #fi
+  params+=" --min-request-timeout=1800"
   if [[ -n "${RUNTIME_CONFIG:-}" ]]; then
     params+=" --runtime-config=${RUNTIME_CONFIG}"
   fi
